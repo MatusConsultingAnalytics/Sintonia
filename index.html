@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Reparto Patrimonial · Sintonía 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --red:#ED2E38;
+    --gray-dark:#656266;
+    --gray-light:#B5B0AD;
+    --text:#2C2C2C;
+    --border:#CCCCCC;
+    --row-tint:#FDF0F0;
+    --row-plain:#F5F5F5;
+    --bg:#FAFAF8;
+    --panel:#FFFFFF;
+    --group-a:#2F5C8F;
+    --group-a-tint:#EAF0F6;
+    --group-b:#2E7D5B;
+    --group-b-tint:#EAF4EF;
+    --group-h:#8B5FA8;
+    --group-h-tint:#F3EDF6;
+    --ok:#2E7D5B;
+    --warn:#B4791F;
+    --bad:#C23B3B;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    font-feature-settings:'tnum' 1,'cv11' 1;
+    line-height:1.45;
+    padding:28px 16px 64px;
+  }
+  .wrap{max-width:1040px;margin:0 auto;}
+
+  /* ---------- header ---------- */
+  .eyebrow{
+    font-size:12px;
+    letter-spacing:.02em;
+    color:var(--gray-dark);
+  }
+  .eyebrow span{color:var(--red);font-weight:600;}
+  h1{
+    font-size:clamp(24px,4vw,32px);
+    font-weight:800;
+    letter-spacing:-0.01em;
+    margin:6px 0 4px;
+    color:var(--text);
+  }
+  .subtitle{
+    font-size:15px;
+    color:var(--gray-dark);
+    margin:0 0 18px;
+  }
+  .header-rule{
+    height:3px;
+    background:var(--red);
+    margin-bottom:18px;
+    border-radius:2px;
+  }
+
+  /* ---------- universe section ---------- */
+  .universe{margin-bottom:40px;}
+  .universe-head{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .universe-title{
+    font-size:19px;
+    font-weight:700;
+  }
+  .universe-title .num{
+    display:inline-block;
+    color:var(--gray-dark);
+    font-weight:500;
+    font-size:13px;
+    letter-spacing:.02em;
+    margin-right:8px;
+    vertical-align:middle;
+  }
+  .universe-total{
+    font-size:13px;
+    color:var(--gray-dark);
+  }
+  .universe-total b{color:var(--text);}
+
+  /* ---------- summary panels (estaciones) ---------- */
+  .summary{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:14px;
+    margin-bottom:14px;
+  }
+  .group-panel{
+    background:var(--gt);
+    border:1px solid var(--gc);
+    border-top:5px solid var(--gc);
+    border-radius:8px;
+    padding:14px 16px;
+  }
+  .group-panel.a,.cmp-group.a{--gc:var(--group-a); --gt:var(--group-a-tint);}
+  .group-panel.b,.cmp-group.b{--gc:var(--group-b); --gt:var(--group-b-tint);}
+  .group-panel.h,.cmp-group.h{--gc:var(--group-h); --gt:var(--group-h-tint);}
+  .group-name{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--gc);
+    margin-bottom:10px;
+  }
+  .group-name::before{
+    content:'';
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:var(--gc);
+    flex-shrink:0;
+  }
+  .group-row{
+    display:flex;
+    justify-content:space-between;
+    font-size:13.5px;
+    padding:3px 0;
+    color:var(--gray-dark);
+  }
+  .group-row b{
+    color:var(--text);
+    font-weight:600;
+  }
+  .group-row.deviation{
+    margin-top:6px;
+    padding-top:8px;
+    border-top:1px dashed var(--border);
+  }
+  .dev-num{font-size:11.5px;font-weight:500;color:var(--gray-dark);}
+
+  /* ---------- comparativo de escenarios (predios) ---------- */
+  .cmp{
+    border:1px solid var(--border);
+    border-radius:8px;
+    overflow:hidden;
+    margin-bottom:14px;
+    background:#fff;
+  }
+  .cmp-head,.cmp-row{
+    display:grid;
+    grid-template-columns:1.05fr 1fr 1fr 1fr;
+    gap:8px;
+    align-items:center;
+    padding:5px 14px;
+  }
+  .cmp-head{
+    background:var(--red);
+    color:#fff;
+    font-size:12.5px;
+    font-weight:700;
+    padding:10px 14px;
+  }
+  .cmp-head div:not(:first-child){text-align:right;}
+  .cmp-row{font-size:13.5px;color:var(--gray-dark);}
+  .cmp-cell{text-align:right;color:var(--text);font-weight:600;}
+  .cmp-row.total{
+    background:var(--row-plain);
+    padding-top:9px;
+    padding-bottom:9px;
+  }
+  .cmp-row.total .cmp-label{color:var(--text);font-weight:700;}
+  .cmp-group{
+    background:var(--gt);
+    border-left:4px solid var(--gc);
+    border-top:1px solid var(--border);
+    padding:7px 0 6px;
+  }
+  .cmp-group .group-name{margin:0;padding:2px 14px 3px 11px;}
+  .cmp-row.dev{
+    margin:3px 0 0;
+    padding-top:6px;
+    border-top:1px dashed var(--border);
+    align-items:start;
+  }
+  .cmp.n3 .cmp-head,.cmp.n3 .cmp-row{grid-template-columns:1.05fr 1fr 1fr 1fr;}
+  .cmp.n1{max-width:560px;}
+  .cmp.n1 .cmp-head,.cmp.n1 .cmp-row{grid-template-columns:.7fr 1fr;}
+  .cmp.people{margin-top:14px;margin-bottom:0;}
+  .cmp-head small{display:block;font-size:10.5px;font-weight:400;opacity:.9;}
+  .cmp-row.person{
+    border-top:1px solid var(--border);
+    border-left:4px solid var(--gc);
+    background:var(--gt);
+    align-items:start;
+    padding:8px 14px 8px 11px;
+  }
+  .cmp-row.person.a{--gc:var(--group-a);--gt:var(--group-a-tint);}
+  .cmp-row.person.b{--gc:var(--group-b);--gt:var(--group-b-tint);}
+  .cmp-row.person.h{--gc:var(--group-h);--gt:var(--group-h-tint);}
+  .cmp-row.person .cmp-label{color:var(--gc);font-weight:700;font-size:13.5px;}
+  .cmp-row.person.group{border-top:2px solid var(--gc);padding-top:10px;}
+  .cmp-row.person.group .cmp-label{font-size:14px;}
+  .cmp-row.person.member{background:#fff;border-top:1px dashed var(--border);}
+  .cmp-row.person.member .cmp-label{padding-left:14px;font-weight:600;font-size:13px;}
+  .cmp-row.person.member .cmp-cell{font-weight:500;}
+  .cmp-row.person.member .cmp-cell > div:first-child{font-weight:600;}
+  .p-sub{font-size:11.5px;font-weight:500;color:var(--gray-dark);margin-top:1px;}
+  .p-dev{margin-top:1px;}
+  /* ---------- matriz: participación en valor por activo ---------- */
+  .vm-wrap-outer{margin-top:14px;}
+  .vm-bar{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:10px 14px;
+    flex-wrap:wrap;
+    margin-bottom:8px;
+  }
+  .vm-title{font-size:14px;font-weight:700;}
+  .vm-title small{display:block;font-size:11px;font-weight:400;color:var(--gray-dark);}
+  .tabs{display:flex;gap:6px;flex-wrap:wrap;}
+  .tab{
+    font-family:inherit;
+    font-size:12px;
+    font-weight:600;
+    padding:5px 12px;
+    border:1px solid var(--border);
+    border-radius:20px;
+    background:#fff;
+    color:var(--gray-dark);
+    cursor:pointer;
+  }
+  .tab:hover{border-color:var(--gray-dark);color:var(--text);}
+  .tab.active{background:var(--red);border-color:var(--red);color:#fff;}
+  .vm-scroll{
+    border:1px solid var(--border);
+    border-radius:8px;
+    overflow-x:auto;
+    background:#fff;
+  }
+  .vm{min-width:900px;}
+  .vm-row{
+    display:grid;
+    grid-template-columns:minmax(120px,1.2fr) repeat(8,minmax(94px,1fr));
+    align-items:center;
+    border-left:4px solid transparent;
+    background:#fff;
+  }
+  .vm-row + .vm-row{border-top:1px solid var(--border);}
+  .vm-row.row-a{border-left-color:var(--group-a);}
+  .vm-row.row-b{border-left-color:var(--group-b);}
+  .vm-row.row-h{border-left-color:var(--group-h);}
+  .vm-hd{background:var(--red);color:#fff;font-size:11.5px;font-weight:700;}
+  .vm-total{background:var(--row-plain);}
+  .vm-label{
+    padding:8px 10px;
+    font-size:13px;
+    font-weight:600;
+    position:sticky;
+    left:0;
+    z-index:1;
+    background:inherit;
+  }
+  .vm-cell{padding:7px 10px;text-align:right;font-size:12.5px;line-height:1.25;}
+  .vm-cell b{display:block;font-weight:600;color:var(--text);}
+  .vm-cell span{display:block;font-size:10.5px;color:var(--gray-dark);}
+  .vm-cell.grp b{font-weight:700;}
+  .vm-hd .vm-cell{padding-top:10px;padding-bottom:10px;font-weight:700;}
+  .vm-row:not(.vm-hd) .vm-cell.a.grp{background:var(--group-a-tint);}
+  .vm-row:not(.vm-hd) .vm-cell.b.grp{background:var(--group-b-tint);}
+  .vm-row:not(.vm-hd) .vm-cell.h{background:var(--group-h-tint);}
+  .vm-row:not(.vm-hd) .vm-cell.t{background:var(--row-plain);}
+  .vm-total .vm-cell b{font-weight:700;}
+  .vm-total .vm-label{font-weight:700;}
+  .delta{
+    display:block;
+    font-size:11px;
+    font-weight:500;
+    color:var(--gray-dark);
+    margin-top:1px;
+  }
+
+  /* ---------- restriction banner ---------- */
+  .restriction-banner{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    font-size:13px;
+    padding:10px 14px;
+    border-radius:6px;
+    margin-bottom:16px;
+    border:1px solid transparent;
+  }
+  .restriction-banner .icon{font-size:15px;line-height:1;}
+  .restriction-banner.ok{background:#E4F3EB;color:#1F5A3F;border-color:#CFE9DA;}
+  .restriction-banner.bad{background:#FAE7E5;color:#8F2B2B;border-color:#F2C6C2;}
+  .restriction-banner.pending{background:#F5F5F5;color:var(--gray-dark);border-color:var(--border);}
+
+  /* ---------- ledger ---------- */
+  .ledger{
+    border:1px solid var(--border);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  .ledger-header{
+    display:grid;
+    grid-template-columns:1fr 110px 190px;
+    gap:8px;
+    background:var(--red);
+    color:#fff;
+    font-size:12px;
+    font-weight:600;
+    padding:9px 14px;
+  }
+  .ledger-header .c2{text-align:right;}
+  .ledger-header .c3{text-align:center;}
+  .ledger-header small{
+    display:block;
+    font-size:10px;
+    font-weight:400;
+    opacity:.9;
+  }
+  .asset-row{
+    display:grid;
+    grid-template-columns:1fr 110px 190px;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px 10px 11px;
+    border-left:4px solid transparent;
+  }
+  .ledger.multi .ledger-header,
+  .ledger.multi .asset-row{
+    grid-template-columns:1fr 124px 124px 124px 190px;
+  }
+  .asset-row:nth-child(odd){background:var(--row-tint);}
+  .asset-row:nth-child(even){background:var(--row-plain);}
+  .asset-row.row-a{background:var(--group-a-tint); border-left-color:var(--group-a);}
+  .asset-row.row-b{background:var(--group-b-tint); border-left-color:var(--group-b);}
+  .asset-row.row-h{background:var(--group-h-tint); border-left-color:var(--group-h);}
+  .asset-row.row-joint{border-right:4px solid var(--group-h);}
+  .joint-badge{color:var(--group-h);border-color:var(--group-h);}
+  .asset-name{
+    font-size:14px;
+    font-weight:600;
+  }
+  .asset-note{
+    display:block;
+    font-size:11.5px;
+    font-weight:400;
+    color:var(--gray-dark);
+    margin-top:1px;
+  }
+  .badge{
+    display:inline-block;
+    font-size:10px;
+    font-weight:700;
+    letter-spacing:.02em;
+    color:var(--red);
+    border:1px solid var(--red);
+    border-radius:20px;
+    padding:1px 7px;
+    margin-left:7px;
+    vertical-align:middle;
+  }
+  .asset-value{
+    text-align:right;
+    font-size:14px;
+    font-weight:600;
+  }
+
+  /* ---------- segmented control ---------- */
+  .segmented{
+    display:grid;
+    grid-template-columns:32px 32px 28px 26px;
+    justify-self:end;
+    border:1px solid var(--border);
+    border-radius:20px;
+    overflow:hidden;
+    background:#fff;
+    height:30px;
+  }
+  .seg-btn{
+    border:none;
+    background:transparent;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:700;
+    color:var(--gray-dark);
+    font-family:inherit;
+    transition:background .15s ease,color .15s ease;
+  }
+  .seg-btn.seg-none{font-weight:400;color:var(--gray-light);background:#F2F2F2;}
+  .seg-btn.active-a{background:var(--group-a);color:#fff;}
+  .seg-btn.active-b{background:var(--group-b);color:#fff;}
+  .seg-btn.active-h{background:var(--group-h);color:#fff;}
+  .seg-btn.active-none{background:#EDEDED;color:var(--gray-dark);}
+  .seg-btn:not(.active-a):not(.active-b):not(.active-h):not(.active-none):hover{background:#F0F0F0;}
+
+  /* ---------- controls / footer ---------- */
+  .controls{
+    display:flex;
+    gap:10px;
+    justify-content:flex-end;
+    margin:6px 0 0;
+    flex-wrap:wrap;
+  }
+  .btn-link{
+    font-size:12.5px;
+    font-weight:600;
+    color:var(--gray-dark);
+    background:none;
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:6px 14px;
+    cursor:pointer;
+    font-family:inherit;
+  }
+  .btn-link:hover{border-color:var(--gray-dark);color:var(--text);}
+
+  .notes{
+    margin-top:10px;
+    padding-top:16px;
+    border-top:1px solid var(--border);
+    font-size:12px;
+    color:var(--gray-dark);
+  }
+  .notes p{margin:0 0 6px;}
+  .footer{
+    margin-top:26px;
+    padding-top:12px;
+    border-top:1px solid var(--border);
+    font-size:11.5px;
+    color:var(--gray-light);
+    text-align:center;
+  }
+
+  @media (max-width:560px){
+    .summary{grid-template-columns:1fr;}
+    .ledger-header{display:none;}
+    .asset-row{
+      grid-template-columns:1fr;
+      row-gap:8px;
+      padding:12px 14px;
+    }
+    .asset-value{text-align:left;}
+    .segmented{justify-self:start;}
+    .controls{justify-content:stretch;}
+    .btn-link{flex:1;text-align:center;}
+
+    .cmp-head,.cmp-row{gap:4px;padding:6px 8px;}
+    .cmp.n3 .cmp-head,.cmp.n3 .cmp-row{grid-template-columns:.8fr 1fr 1fr 1fr;}
+    .cmp.n1 .cmp-head,.cmp.n1 .cmp-row{grid-template-columns:.6fr 1fr;}
+    .cmp-row.person{padding:7px 8px 7px 6px;}
+    .p-sub{font-size:10px;}
+    .dev-num{font-size:10px;}
+    .cmp-head{font-size:10.5px;padding:8px;}
+    .cmp-row{font-size:11.5px;}
+    .cmp-group .group-name{padding-left:8px;}
+
+    .ledger.multi .asset-row{
+      grid-template-columns:1fr 1fr 1fr;
+      column-gap:6px;
+    }
+    .ledger.multi .asset-row > :first-child,
+    .ledger.multi .asset-row > .segmented{grid-column:1 / -1;}
+    .asset-value[data-label]::before{
+      content:attr(data-label);
+      display:block;
+      font-size:10px;
+      font-weight:500;
+      color:var(--gray-dark);
+      line-height:1.2;
+      margin-bottom:2px;
+    }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">MATUS CONSULTING <span>·</span> SINTONÍA 2026</div>
+  <h1>Calculadora de reparto patrimonial</h1>
+  <p class="subtitle">Predios y estaciones · asigna cada activo completo a un grupo (o a Hortencia) y compara los tres escenarios de valuación de predios con la misma asignación.</p>
+  <div class="header-rule"></div>
+
+  <div id="app"></div>
+
+  <div class="notes" id="notes"></div>
+
+  <div class="footer">Matus Consulting · Sintonía 2026 · Confidencial · Documento de trabajo, sujeto a revisión documental, fiscal, societaria y legal antes del cierre.</div>
+</div>
+
+<script>
+const GROUPS = {
+  A: { key:'A', label:'Marco + Adela', color:'var(--group-a)' },
+  B: { key:'B', label:'Amparo + Alicia', color:'var(--group-b)' },
+  H: { key:'H', label:'Hortencia', color:'var(--group-h)' }
+};
+
+// Escenarios de valuación de predios (la primera columna es la referencia para las diferencias)
+const SCENARIOS = [
+  { key:'add', title:'Avalúo addendum' },
+  { key:'sc',  title:'Sin castigo a 5 de Mayo' },
+  { key:'chu', title:'Avalúo Chuchín' }
+];
+const BASE_KEY = SCENARIOS[0].key;
+
+function valueOf(a, k){ return a.values ? a.values[k] : a.value; }
+
+// Familiares y cuadro accionario por activo (% de participación de cada uno)
+const PEOPLE = [
+  { key:'M',  name:'Marco',     group:'A' },
+  { key:'Ad', name:'Adela',     group:'A' },
+  { key:'Al', name:'Alicia',    group:'B' },
+  { key:'Am', name:'Amparo',    group:'B' },
+  { key:'H',  name:'Hortencia', group:'H' }
+];
+const THIRD = 100/3, SIXTH = 100/6;   // 33.33% y 16.67% exactos (el redondeo se ajusta en el cierre, según Addendum 2)
+function own(M, Ad, Al, Am, H){ return { M, Ad, Al, Am, H }; }
+
+const UNIVERSES = [
+  {
+    id:'predios',
+    num:'Universo 1',
+    title:'Predios',
+    scenarios:true,
+    restrictionText:'Cada grupo debe quedarse con un edificio de Irapuato',
+    restrictionNote:'Morelos 110 y 5 de Mayo',
+    restrictionPair:['morelos','demayo'],
+    assets:[
+      { id:'perules',  name:'Los Perules', values:{ add:115.50231,   sc:115.50231,   chu:105.105 },     own:own(40, 20, 20, 20, 0) },
+      { id:'antenas1', name:'Antenas 1',   values:{ add:76.4771175,  sc:76.4771175,  chu:67.414 },      own:own(50, SIXTH, SIXTH, SIXTH, 0) },
+      { id:'antenas2', name:'Antenas 2',   values:{ add:9.98566542,  sc:9.98566542,  chu:8.80228846 },  own:own(40, 20, 20, 20, 0) },
+      { id:'morelos',  name:'Morelos 110', values:{ add:13.4824725,  sc:13.4824725,  chu:14.123 },      own:own(40, 20, 20, 20, 0), restriction:true, badge:'Irapuato' },
+      { id:'demayo',   name:'5 de Mayo',   values:{ add:11.01629025, sc:11.596095,    chu:11.483 },      own:own(40, 20, 20, 20, 0), restriction:true, badge:'Irapuato' },
+      { id:'sonaja',   name:'La Sonaja',   values:{ add:7.10728779,  sc:7.10728779,   chu:7.10728779 },  own:own(THIRD, SIXTH, SIXTH, SIXTH, SIXTH) },
+      { id:'pino10',   name:'Pino 10',     values:{ add:2.92824,     sc:2.92824,      chu:2.92824 },     own:own(40, 20, 20, 20, 0) }
+    ],
+    defaults:{ perules:'A', sonaja:'A', pino10:'A', morelos:'A', antenas1:'B', antenas2:'B', demayo:'B' }
+  },
+  {
+    id:'estaciones',
+    num:'Universo 2',
+    title:'Estaciones',
+    restrictionText:'Cada grupo debe quedarse con una A.M. de Salamanca',
+    restrictionNote:'XEMAS-AM y XEEMM-AM',
+    restrictionPair:['xemas','xeemm'],
+    assets:[
+      { id:'xhnh', name:'XHNH-FM', value:14.19, own:own(50, SIXTH, SIXTH, SIXTH, 0) },
+      { id:'xhwe', name:'XHWE-FM', value:10.18, own:own(33.40, 22, 22, 22, 0.60) },
+      { id:'xhcn', name:'XHCN-FM', value:9.41, own:own(39.94, 20.02, 20.02, 20.02, 0) },
+      { id:'xhya', name:'XHYA-FM', value:8.52, own:own(26.70, 23.90, 23.90, 23.90, 1.60) },
+      { id:'xhamo', name:'XHAMO-FM', value:6.45, own:own(40, 20, 20, 20, 0) },
+      { id:'xemas', name:'XEMAS-AM', value:4.26, own:own(41.50, 20.17, 14.17, 14.16, 10), restriction:true, badge:'Salamanca' },
+      { id:'xeemm', name:'XEEMM-AM', value:4.30, own:own(25, 25, 25, 25, 0), restriction:true, badge:'Salamanca' }
+    ],
+    defaults:{ xhnh:'A', xhya:'A', xhamo:'A', xemas:'A', xhwe:'B', xhcn:'B', xeemm:'B' }
+  }
+];
+
+// % del grupo Marco+Adela y de Hortencia, derivados del cuadro accionario por persona
+UNIVERSES.forEach(u => u.assets.forEach(a => {
+  a.groupAPct = a.own.M + a.own.Ad;
+  a.hortenciaPct = a.own.H;
+}));
+
+let assignments = {};
+function resetToDefaults(){
+  assignments = {};
+  UNIVERSES.forEach(u => u.assets.forEach(a => {
+    assignments[a.id] = { main: u.defaults[a.id] || null, h: false };
+  }));
+}
+function clearAll(){
+  assignments = {};
+  UNIVERSES.forEach(u => u.assets.forEach(a => { assignments[a.id] = { main: null, h: false }; }));
+}
+resetToDefaults();
+
+function money(n){
+  const sign = n < 0 ? '−' : '';
+  return sign + '$' + Math.abs(n).toFixed(2) + ' M';
+}
+function deltaText(d){
+  return (d > 0 ? '+' : '−') + '$' + Math.abs(d).toFixed(2) + ' M';
+}
+
+// Diferencia (desviación) en millones, con signo; sin color ni etiquetas
+function devText(d){
+  return Math.abs(d) < 0.005 ? '$0.00 M' : deltaText(d);
+}
+
+// k = clave del escenario (solo aplica a predios; estaciones tienen un solo valor)
+function computeUniverse(u, k){
+  const val = a => valueOf(a, k);
+  const total = u.assets.reduce((s,a) => s + val(a), 0);
+  const targetA = u.assets.reduce((s,a) => s + val(a) * a.groupAPct/100, 0);
+  const targetH = u.assets.reduce((s,a) => s + val(a) * (a.hortenciaPct||0)/100, 0);
+  const targetB = total - targetA - targetH;
+  let actualA = 0, actualB = 0, actualH = 0;
+  u.assets.forEach(a => {
+    const asg = assignments[a.id];
+    const v = val(a);
+    const half = v / 2;
+    if(asg.main === 'A' && asg.h){ actualA += half; actualH += half; }
+    else if(asg.main === 'B' && asg.h){ actualB += half; actualH += half; }
+    else if(asg.main === 'A'){ actualA += v; }
+    else if(asg.main === 'B'){ actualB += v; }
+    else if(asg.h){ actualH += v; }
+  });
+  const unassigned = total - actualA - actualB - actualH;
+  const devA = actualA - targetA;
+  const devB = actualB - targetB;
+  const devH = actualH - targetH;
+  const devAPct = total ? (devA/total*100) : 0;
+  const devBPct = total ? (devB/total*100) : 0;
+  const devHPct = targetH > 0.0001 ? (devH/targetH*100) : (actualH > 0.0001 ? 100 : 0);
+
+  const [id1, id2] = u.restrictionPair;
+  const g1 = assignments[id1].main, g2 = assignments[id2].main;
+  let restrictionState;
+  if((g1 === 'A' && g2 === 'B') || (g1 === 'B' && g2 === 'A')) restrictionState = 'ok';
+  else if(g1 && g2) restrictionState = 'bad';
+  else restrictionState = 'pending';
+
+  return { total, targetA, targetB, targetH, actualA, actualB, actualH, unassigned, devA, devB, devH, devAPct, devBPct, devHPct, restrictionState };
+}
+
+// Valor que recibe y valor que le corresponde (derecho) a cada familiar.
+// El valor asignado a un grupo se divide entre sus integrantes según su % en cada activo;
+// si el activo es conjunto con Hortencia, la mitad es de ella y la otra mitad del grupo.
+function computePeople(u, k){
+  const total = u.assets.reduce((s,a) => s + valueOf(a, k), 0);
+  const people = {};
+  PEOPLE.forEach(p => { people[p.key] = { target:0, actual:0 }; });
+  u.assets.forEach(a => {
+    const v = valueOf(a, k);
+    const asg = assignments[a.id];
+    PEOPLE.forEach(p => { people[p.key].target += v * a.own[p.key] / 100; });
+    let gShare = 0, hShare = 0;
+    if(asg.main && asg.h){ gShare = v/2; hShare = v/2; }
+    else if(asg.main){ gShare = v; }
+    else if(asg.h){ hShare = v; }
+    if(asg.main){
+      const members = PEOPLE.filter(p => p.group === asg.main);
+      const sum = members.reduce((s,p) => s + a.own[p.key], 0);
+      members.forEach(p => {
+        people[p.key].actual += sum > 0 ? gShare * a.own[p.key] / sum : gShare / members.length;
+      });
+    }
+    people.H.actual += hShare;
+  });
+  return { total, people };
+}
+
+function peopleTableHTML(u, scs){
+  const cols = scs.map(sc => computePeople(u, sc.key));
+  const head = `<div class="cmp-head"><div>Participación por grupo y familiar<small>% sobre el valor total del universo</small></div>${scs.map(sc => `<div>${sc.title}</div>`).join('')}</div>`;
+
+  const cellHTML = (actual, target, total) => {
+    const raw = actual - target;
+    const d = Math.abs(raw) < 0.005 ? 0 : raw;
+    return `<div class="cmp-cell">
+        <div>Recibe: ${money(actual)} · ${(actual / total * 100).toFixed(2)}%</div>
+        <div class="p-sub">Derecho: ${money(target)} · ${(target / total * 100).toFixed(2)}%</div>
+        <div class="p-dev"><span class="dev-num">${devText(d)}</span></div>
+      </div>`;
+  };
+  const rowHTML = (cls, label, getVals) =>
+    `<div class="cmp-row person ${cls}"><div class="cmp-label">${label}</div>${cols.map(c => { const v = getVals(c); return cellHTML(v.actual, v.target, c.total); }).join('')}</div>`;
+
+  const BLOCKS = [
+    { cls:'a', label:'Grupo Marco + Adela',   keys:['M','Ad'] },
+    { cls:'b', label:'Grupo Amparo + Alicia', keys:['Al','Am'] },
+    { cls:'h', label:'Hortencia',             keys:['H'] }
+  ];
+  const rows = BLOCKS.map(b => {
+    const sumVals = c => ({
+      actual: b.keys.reduce((sum,k) => sum + c.people[k].actual, 0),
+      target: b.keys.reduce((sum,k) => sum + c.people[k].target, 0)
+    });
+    if(b.keys.length === 1){
+      return rowHTML(b.cls + ' group', b.label, sumVals);
+    }
+    const members = b.keys.map(k => {
+      const person = PEOPLE.find(x => x.key === k);
+      return rowHTML(b.cls + ' member', person.name, c => c.people[k]);
+    }).join('');
+    return rowHTML(b.cls + ' group', b.label, sumVals) + members;
+  }).join('');
+  return `<div class="cmp n${scs.length} people">${head}${rows}</div>`;
+}
+
+// ---------- matriz: participación en valor (valor del activo × % de cada persona) ----------
+let matrixScenario = SCENARIOS[0].key;
+function setMatrixScenario(k){ matrixScenario = k; render(); }
+
+function pesos(n){
+  return '$' + (n * 1e6).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
+}
+
+function tabsHTML(){
+  return `<div class="tabs" role="tablist">${SCENARIOS.map(sc =>
+    `<button class="tab ${sc.key === matrixScenario ? 'active' : ''}" onclick="setMatrixScenario('${sc.key}')">${sc.title}</button>`
+  ).join('')}</div>`;
+}
+
+function valueMatrixHTML(u, k, tabs){
+  const COLS = [
+    { cls:'a', label:'Marco',           keys:['M'] },
+    { cls:'a', label:'Adela',           keys:['Ad'] },
+    { cls:'a', label:'Marco + Adela',   keys:['M','Ad'], group:true },
+    { cls:'b', label:'Alicia',          keys:['Al'] },
+    { cls:'b', label:'Amparo',          keys:['Am'] },
+    { cls:'b', label:'Amparo + Alicia', keys:['Al','Am'], group:true },
+    { cls:'h', label:'Hortencia',       keys:['H'] },
+    { cls:'t', label:'Total',           keys:['M','Ad','Al','Am','H'], group:true }
+  ];
+  const universeTotal = u.assets.reduce((sum,a) => sum + valueOf(a, k), 0);
+  const sumPct = (a, keys) => keys.reduce((sum,key) => sum + a.own[key], 0);
+  const cell = (c, v, txt) =>
+    `<div class="vm-cell ${c.cls}${c.group ? ' grp' : ''}" title="${pesos(v)}"><b>${money(v)}</b><span>${txt}</span></div>`;
+
+  const head = `<div class="vm-row vm-hd"><div class="vm-label">Activo</div>${COLS.map(c => `<div class="vm-cell ${c.cls}${c.group ? ' grp' : ''}">${c.label}</div>`).join('')}</div>`;
+  const rows = u.assets.map(a => {
+    const v = valueOf(a, k);
+    const asg = assignments[a.id];
+    const rc = asg.main === 'A' ? 'row-a' : (asg.main === 'B' ? 'row-b' : (asg.h ? 'row-h' : ''));
+    return `<div class="vm-row ${rc}"><div class="vm-label">${a.name}</div>${COLS.map(c => {
+      const pc = sumPct(a, c.keys);
+      return cell(c, v * pc / 100, fmtOwn(pc));
+    }).join('')}</div>`;
+  }).join('');
+  const totals = COLS.map(c => {
+    const val = u.assets.reduce((sum,a) => sum + valueOf(a, k) * sumPct(a, c.keys) / 100, 0);
+    return cell(c, val, (val / universeTotal * 100).toFixed(2) + '%');
+  }).join('');
+
+  return `
+  <div class="vm-wrap-outer">
+    <div class="vm-bar">
+      <div class="vm-title">Participación en valor por activo<small>Valor del activo × % de cada persona · en el total, % sobre el universo · el cursor muestra pesos</small></div>
+      ${tabs || ''}
+    </div>
+    <div class="vm-scroll"><div class="vm">${head}${rows}<div class="vm-row vm-total"><div class="vm-label">Total</div>${totals}</div></div></div>
+  </div>`;
+}
+
+function segmentedHTML(u, a){
+  const asg = assignments[a.id];
+  return `
+    <div class="segmented" role="group" aria-label="Asignación de ${a.name}">
+      <button class="seg-btn ${asg.main==='A' ? 'active-a':''}" title="Marco + Adela" onclick="setMainGroup('${u.id}','${a.id}','A')">A</button>
+      <button class="seg-btn ${asg.main==='B' ? 'active-b':''}" title="Amparo + Alicia" onclick="setMainGroup('${u.id}','${a.id}','B')">B</button>
+      <button class="seg-btn ${asg.h ? 'active-h':''}" title="Hortencia (se puede combinar con A o B)" onclick="toggleHortencia('${u.id}','${a.id}')">H</button>
+      <button class="seg-btn seg-none ${(!asg.main && !asg.h) ? 'active-none':''}" title="Sin asignar" onclick="clearAssignment('${u.id}','${a.id}')">–</button>
+    </div>`;
+}
+
+function rowClassFor(a){
+  const asg = assignments[a.id];
+  const isJoint = !!(asg.main && asg.h);
+  let rowClass = asg.main === 'A' ? 'row-a' : (asg.main === 'B' ? 'row-b' : (asg.h ? 'row-h' : ''));
+  if(isJoint) rowClass += ' row-joint';
+  return { rowClass, isJoint };
+}
+
+function fmtOwn(n){ return (Math.round(n*100)/100).toString() + '%'; }
+function assetNameHTML(a, isJoint){
+  return `
+    <div>
+      <span class="asset-name">${a.name}${a.badge ? `<span class="badge">${a.badge}</span>` : ''}${isJoint ? `<span class="badge joint-badge">+ Hortencia (50/50)</span>` : ''}</span>
+      ${a.note ? `<span class="asset-note">${a.note}</span>` : ''}
+    </div>`;
+}
+
+// Fila de estaciones (un solo valor)
+function assetRowHTML(u, a){
+  const { rowClass, isJoint } = rowClassFor(a);
+  return `
+  <div class="asset-row ${rowClass}" data-asset="${a.id}">
+    ${assetNameHTML(a, isJoint)}
+    <div class="asset-value">${money(a.value)}</div>
+    ${segmentedHTML(u, a)}
+  </div>`;
+}
+
+// Fila de predios (un valor por escenario + diferencia contra el addendum)
+function assetRowMultiHTML(u, a){
+  const { rowClass, isJoint } = rowClassFor(a);
+  const base = valueOf(a, BASE_KEY);
+  const cells = SCENARIOS.map(s => {
+    const v = valueOf(a, s.key);
+    const d = v - base;
+    const delta = (s.key !== BASE_KEY && Math.abs(d) >= 0.005) ? `<span class="delta">${deltaText(d)}</span>` : '';
+    return `<div class="asset-value" data-label="${s.title}">${money(v)}${delta}</div>`;
+  }).join('');
+  return `
+  <div class="asset-row ${rowClass}" data-asset="${a.id}">
+    ${assetNameHTML(a, isJoint)}
+    ${cells}
+    ${segmentedHTML(u, a)}
+  </div>`;
+}
+
+function bannerHTML(u, c){
+  let bannerClass, bannerIcon, bannerText;
+  if(c.restrictionState === 'ok'){
+    bannerClass='ok'; bannerIcon='✓';
+    bannerText=`${u.restrictionText} — cumplida (${u.restrictionNote}, una para cada grupo).`;
+  } else if(c.restrictionState === 'bad'){
+    bannerClass='bad'; bannerIcon='⚠';
+    bannerText=`${u.restrictionText} — no se cumple: ${u.restrictionNote} no quedaron uno para Marco+Adela y otro para Amparo+Alicia (Hortencia no cuenta para esta restricción).`;
+  } else {
+    bannerClass='pending'; bannerIcon='•';
+    bannerText=`${u.restrictionText} (${u.restrictionNote}) — falta asignarlos entre Marco+Adela y Amparo+Alicia.`;
+  }
+  return `<div class="restriction-banner ${bannerClass}"><span class="icon">${bannerIcon}</span><span>${bannerText}</span></div>`;
+}
+
+// Comparativo lado a lado de los 3 escenarios (predios)
+function comparisonHTML(u){
+  const cs = SCENARIOS.map(s => computeUniverse(u, s.key));
+  const baseTotal = cs[0].total;
+  const row = (label, cells, extra) => `
+    <div class="cmp-row ${extra||''}"><div class="cmp-label">${label}</div>${cells.map(x => `<div class="cmp-cell">${x}</div>`).join('')}</div>`;
+
+  const totalCells = cs.map((c,i) => {
+    const d = c.total - baseTotal;
+    const delta = (i > 0 && Math.abs(d) >= 0.005) ? `<span class="delta">${deltaText(d)} vs. addendum</span>` : '';
+    const sin = c.unassigned > 0.005 ? `<span class="delta">${money(c.unassigned)} sin asignar</span>` : '';
+    return `${money(c.total)}${delta}${sin}`;
+  });
+
+  const group = (cls, name, aKey, tKey, dKey) => `
+    <div class="cmp-group ${cls}">
+      <div class="group-name">${name}</div>
+      ${row('Asignado', cs.map(c => money(c[aKey])))}
+      ${row('Objetivo', cs.map(c => money(c[tKey])))}
+      ${row('Desviación', cs.map(c => `<span class="dev-num">${devText(c[dKey])}</span>`), 'dev')}
+    </div>`;
+
+  return `
+  <div class="cmp n3">
+    <div class="cmp-head"><div>Comparativo de escenarios</div>${SCENARIOS.map(s => `<div>${s.title}</div>`).join('')}</div>
+    ${row('Valor total del universo', totalCells, 'total')}
+    ${group('a', 'Grupo Marco + Adela', 'actualA', 'targetA', 'devA')}
+    ${group('b', 'Grupo Amparo + Alicia', 'actualB', 'targetB', 'devB')}
+    ${group('h', 'Hortencia', 'actualH', 'targetH', 'devH')}
+  </div>`;
+}
+
+function prediosHTML(u){
+  const c0 = computeUniverse(u, BASE_KEY);
+  return `
+  <div class="universe">
+    <div class="universe-head">
+      <div class="universe-title"><span class="num">${u.num}</span>${u.title}</div>
+    </div>
+
+    ${comparisonHTML(u)}
+
+    ${bannerHTML(u, c0)}
+
+    <div class="ledger multi">
+      <div class="ledger-header">
+        <div>Activo</div>
+        ${SCENARIOS.map((s,i) => `<div class="c2">${s.title}${i > 0 ? '<small>Δ vs. addendum</small>' : ''}</div>`).join('')}
+        <div class="c3">Asignación</div>
+      </div>
+      ${u.assets.map(a => assetRowMultiHTML(u,a)).join('')}
+    </div>
+
+    ${valueMatrixHTML(u, matrixScenario, tabsHTML())}
+
+    ${peopleTableHTML(u, SCENARIOS)}
+  </div>`;
+}
+
+function universeHTML(u){
+  if(u.scenarios) return prediosHTML(u);
+
+  const c = computeUniverse(u);
+
+  return `
+  <div class="universe">
+    <div class="universe-head">
+      <div class="universe-title"><span class="num">${u.num}</span>${u.title}</div>
+      <div class="universe-total">Valor total del universo: <b>${money(c.total)}</b>${c.unassigned > 0.005 ? ` · ${money(c.unassigned)} sin asignar` : ''}</div>
+    </div>
+
+    <div class="summary">
+      <div class="group-panel a">
+        <div class="group-name">Grupo Marco + Adela</div>
+        <div class="group-row"><span>Asignado</span><b>${money(c.actualA)}</b></div>
+        <div class="group-row"><span>Objetivo (por % de participación)</span><b>${money(c.targetA)}</b></div>
+        <div class="group-row deviation">
+          <span>Desviación</span>
+          <span class="dev-num">${devText(c.devA)}</span>
+        </div>
+      </div>
+      <div class="group-panel b">
+        <div class="group-name">Grupo Amparo + Alicia</div>
+        <div class="group-row"><span>Asignado</span><b>${money(c.actualB)}</b></div>
+        <div class="group-row"><span>Objetivo (por % de participación)</span><b>${money(c.targetB)}</b></div>
+        <div class="group-row deviation">
+          <span>Desviación</span>
+          <span class="dev-num">${devText(c.devB)}</span>
+        </div>
+      </div>
+      <div class="group-panel h">
+        <div class="group-name">Hortencia</div>
+        <div class="group-row"><span>Asignado</span><b>${money(c.actualH)}</b></div>
+        <div class="group-row"><span>Objetivo (por % de participación)</span><b>${money(c.targetH)}</b></div>
+        <div class="group-row deviation">
+          <span>Desviación</span>
+          <span class="dev-num">${devText(c.devH)}</span>
+        </div>
+      </div>
+    </div>
+
+    ${bannerHTML(u, c)}
+
+    <div class="ledger">
+      <div class="ledger-header">
+        <div>Activo</div>
+        <div class="c2">Valor</div>
+        <div class="c3">Asignación</div>
+      </div>
+      ${u.assets.map(a => assetRowHTML(u,a)).join('')}
+    </div>
+
+    ${valueMatrixHTML(u, undefined, '')}
+
+    ${peopleTableHTML(u, [{ key:undefined, title:u.title }])}
+  </div>`;
+}
+
+function render(){
+  document.getElementById('app').innerHTML = UNIVERSES.map(universeHTML).join('') + `
+    <div class="controls">
+      <button class="btn-link" onclick="clearAllAndRender()">Vaciar todo</button>
+    </div>`;
+
+  document.getElementById('notes').innerHTML = `
+    <p><strong>Restricciones vigentes:</strong> ningún activo queda compartido entre Marco+Adela y Amparo+Alicia; en Irapuato cada uno se queda con un edificio (Morelos 110 y 5 de Mayo); en Salamanca cada uno se queda con una A.M. (XEMAS-AM y XEEMM-AM). Hortencia no participa en estas restricciones. Un activo sí puede asignarse a la vez a un grupo (A o B) y a Hortencia: en ese caso su valor se divide 50/50 entre ambos para los cálculos de objetivo y desviación.</p>
+    <p>La asignación de predios es la misma en los tres escenarios; lo que cambia es el valor de avalúo y, con él, los objetivos y las desviaciones. Los objetivos se calculan a partir del % de participación por socio en cada predio/estación; pueden diferir en centésimas por el redondeo ya presente en esos porcentajes.</p>
+    <p>En "Participación en valor por activo", cada cifra es el valor del activo por el % de cada persona (la fila Total es lo que le corresponde a cada quien en el universo). En "Participación por grupo y familiar", <em>Derecho</em> es ese total y <em>Recibe</em> es lo que le toca con la asignación actual: el valor de cada activo asignado a un grupo se divide entre sus integrantes en proporción a su % en ese activo (si es conjunto con Hortencia, la mitad es de ella).</p>
+  `;
+}
+
+function setMainGroup(universeId, assetId, group){
+  assignments[assetId].main = group;
+  render();
+}
+function toggleHortencia(universeId, assetId){
+  assignments[assetId].h = !assignments[assetId].h;
+  render();
+}
+function clearAssignment(universeId, assetId){
+  assignments[assetId] = { main: null, h: false };
+  render();
+}
+function clearAllAndRender(){ clearAll(); render(); }
+
+render();
+</script>
+</body>
+</html>
