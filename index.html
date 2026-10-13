@@ -584,7 +584,7 @@ function clearAll(){
   assignments = {};
   UNIVERSES.forEach(u => u.assets.forEach(a => { assignments[a.id] = { main: null, h: false }; }));
 }
-resetToDefaults();
+clearAll();
 
 function money(n){
   const sign = n < 0 ? '−' : '';
