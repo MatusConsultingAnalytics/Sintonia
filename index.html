@@ -577,12 +577,12 @@ let assignments = {};
 function resetToDefaults(){
   assignments = {};
   UNIVERSES.forEach(u => u.assets.forEach(a => {
-    assignments[a.id] = { main: u.defaults[a.id] || null, h: false };
+    assignments[a.id] = { main: u.defaults[a.id] || null, h: false, hSeq: 0 };
   }));
 }
 function clearAll(){
   assignments = {};
-  UNIVERSES.forEach(u => u.assets.forEach(a => { assignments[a.id] = { main: null, h: false }; }));
+  UNIVERSES.forEach(u => u.assets.forEach(a => { assignments[a.id] = { main: null, h: false, hSeq: 0 }; }));
 }
 clearAll();
 
@@ -599,6 +599,31 @@ function devText(d){
   return Math.abs(d) < 0.005 ? '$0.00 M' : deltaText(d);
 }
 
+// Reparto de cada activo entre su grupo (A/B) y Hortencia.
+// Hortencia solo cubre hasta su derecho en dinero dentro del universo (suma de valor × su % en cada activo);
+// si se le marcan varios activos, su derecho se aplica en el orden en que se marcaron.
+// Lo que no cubre Hortencia queda para el grupo asignado (A o B).
+function hortenciaDerecho(u, k){
+  return u.assets.reduce((s,a) => s + valueOf(a, k) * (a.hortenciaPct||0)/100, 0);
+}
+function allocate(u, k){
+  let remaining = hortenciaDerecho(u, k);
+  const shares = {};
+  u.assets.forEach(a => { shares[a.id] = { g:0, h:0 }; });
+  u.assets
+    .filter(a => assignments[a.id].h)
+    .sort((x,y) => assignments[x.id].hSeq - assignments[y.id].hSeq)
+    .forEach(a => {
+      const h = Math.max(0, Math.min(valueOf(a, k), remaining));
+      shares[a.id].h = h;
+      remaining -= h;
+    });
+  u.assets.forEach(a => {
+    if(assignments[a.id].main) shares[a.id].g = valueOf(a, k) - shares[a.id].h;
+  });
+  return shares;
+}
+
 // k = clave del escenario (solo aplica a predios; estaciones tienen un solo valor)
 function computeUniverse(u, k){
   const val = a => valueOf(a, k);
@@ -607,15 +632,12 @@ function computeUniverse(u, k){
   const targetH = u.assets.reduce((s,a) => s + val(a) * (a.hortenciaPct||0)/100, 0);
   const targetB = total - targetA - targetH;
   let actualA = 0, actualB = 0, actualH = 0;
+  const sh = allocate(u, k);
   u.assets.forEach(a => {
     const asg = assignments[a.id];
-    const v = val(a);
-    const half = v / 2;
-    if(asg.main === 'A' && asg.h){ actualA += half; actualH += half; }
-    else if(asg.main === 'B' && asg.h){ actualB += half; actualH += half; }
-    else if(asg.main === 'A'){ actualA += v; }
-    else if(asg.main === 'B'){ actualB += v; }
-    else if(asg.h){ actualH += v; }
+    if(asg.main === 'A') actualA += sh[a.id].g;
+    else if(asg.main === 'B') actualB += sh[a.id].g;
+    actualH += sh[a.id].h;
   });
   const unassigned = total - actualA - actualB - actualH;
   const devA = actualA - targetA;
@@ -637,19 +659,17 @@ function computeUniverse(u, k){
 
 // Valor que recibe y valor que le corresponde (derecho) a cada familiar.
 // El valor asignado a un grupo se divide entre sus integrantes según su % en cada activo;
-// si el activo es conjunto con Hortencia, la mitad es de ella y la otra mitad del grupo.
+// Hortencia recibe solo hasta su derecho en dinero; el resto del activo es del grupo asignado.
 function computePeople(u, k){
   const total = u.assets.reduce((s,a) => s + valueOf(a, k), 0);
   const people = {};
   PEOPLE.forEach(p => { people[p.key] = { target:0, actual:0 }; });
+  const sh = allocate(u, k);
   u.assets.forEach(a => {
     const v = valueOf(a, k);
     const asg = assignments[a.id];
     PEOPLE.forEach(p => { people[p.key].target += v * a.own[p.key] / 100; });
-    let gShare = 0, hShare = 0;
-    if(asg.main && asg.h){ gShare = v/2; hShare = v/2; }
-    else if(asg.main){ gShare = v; }
-    else if(asg.h){ hShare = v; }
+    const gShare = sh[a.id].g, hShare = sh[a.id].h;
     if(asg.main){
       const members = PEOPLE.filter(p => p.group === asg.main);
       const sum = members.reduce((s,p) => s + a.own[p.key], 0);
@@ -775,10 +795,16 @@ function rowClassFor(a){
 }
 
 function fmtOwn(n){ return (Math.round(n*100)/100).toString() + '%'; }
-function assetNameHTML(a, isJoint){
+function assetNameHTML(u, a){
+  const asg = assignments[a.id];
+  let badge = '';
+  if(asg.h){
+    const h = allocate(u, BASE_KEY)[a.id].h;
+    badge = `<span class="badge joint-badge" title="Hortencia solo cubre su derecho en dinero; el resto es del grupo asignado">Hortencia: ${money(h)}</span>`;
+  }
   return `
     <div>
-      <span class="asset-name">${a.name}${a.badge ? `<span class="badge">${a.badge}</span>` : ''}${isJoint ? `<span class="badge joint-badge">+ Hortencia (50/50)</span>` : ''}</span>
+      <span class="asset-name">${a.name}${a.badge ? `<span class="badge">${a.badge}</span>` : ''}${badge}</span>
       ${a.note ? `<span class="asset-note">${a.note}</span>` : ''}
     </div>`;
 }
@@ -788,7 +814,7 @@ function assetRowHTML(u, a){
   const { rowClass, isJoint } = rowClassFor(a);
   return `
   <div class="asset-row ${rowClass}" data-asset="${a.id}">
-    ${assetNameHTML(a, isJoint)}
+    ${assetNameHTML(u, a)}
     <div class="asset-value">${money(a.value)}</div>
     ${segmentedHTML(u, a)}
   </div>`;
@@ -806,7 +832,7 @@ function assetRowMultiHTML(u, a){
   }).join('');
   return `
   <div class="asset-row ${rowClass}" data-asset="${a.id}">
-    ${assetNameHTML(a, isJoint)}
+    ${assetNameHTML(u, a)}
     ${cells}
     ${segmentedHTML(u, a)}
   </div>`;
@@ -952,9 +978,9 @@ function render(){
     </div>`;
 
   document.getElementById('notes').innerHTML = `
-    <p><strong>Restricciones vigentes:</strong> ningún activo queda compartido entre Marco+Adela y Amparo+Alicia; en Irapuato cada uno se queda con un edificio (Morelos 110 y 5 de Mayo); en Salamanca cada uno se queda con una A.M. (XEMAS-AM y XEEMM-AM). Hortencia no participa en estas restricciones. Un activo sí puede asignarse a la vez a un grupo (A o B) y a Hortencia: en ese caso su valor se divide 50/50 entre ambos para los cálculos de objetivo y desviación.</p>
+    <p><strong>Restricciones vigentes:</strong> ningún activo queda compartido entre Marco+Adela y Amparo+Alicia; en Irapuato cada uno se queda con un edificio (Morelos 110 y 5 de Mayo); en Salamanca cada uno se queda con una A.M. (XEMAS-AM y XEEMM-AM). Hortencia no participa en estas restricciones. Un activo puede asignarse a un grupo (A o B) y además a Hortencia: ella solo cubre, en dinero, hasta su derecho dentro de cada universo (si se le marcan varios activos, se aplica en el orden en que se marcaron) y el resto del activo es del grupo asignado.</p>
     <p>La asignación de predios es la misma en los tres escenarios; lo que cambia es el valor de avalúo y, con él, los objetivos y las desviaciones. Los objetivos se calculan a partir del % de participación por socio en cada predio/estación; pueden diferir en centésimas por el redondeo ya presente en esos porcentajes.</p>
-    <p>En "Participación en valor por activo", cada cifra es el valor del activo por el % de cada persona (la fila Total es lo que le corresponde a cada quien en el universo). En "Participación por grupo y familiar", <em>Derecho</em> es ese total y <em>Recibe</em> es lo que le toca con la asignación actual: el valor de cada activo asignado a un grupo se divide entre sus integrantes en proporción a su % en ese activo (si es conjunto con Hortencia, la mitad es de ella).</p>
+    <p>En "Participación en valor por activo", cada cifra es el valor del activo por el % de cada persona (la fila Total es lo que le corresponde a cada quien en el universo). En "Participación por grupo y familiar", <em>Derecho</em> es ese total y <em>Recibe</em> es lo que le toca con la asignación actual: el valor de cada activo asignado a un grupo se divide entre sus integrantes en proporción a su % en ese activo (si incluye a Hortencia, ella recibe solo hasta su derecho y el resto es del grupo).</p>
   `;
 }
 
@@ -962,12 +988,15 @@ function setMainGroup(universeId, assetId, group){
   assignments[assetId].main = group;
   render();
 }
+let hCounter = 0;
 function toggleHortencia(universeId, assetId){
-  assignments[assetId].h = !assignments[assetId].h;
+  const asg = assignments[assetId];
+  asg.h = !asg.h;
+  asg.hSeq = asg.h ? ++hCounter : 0;
   render();
 }
 function clearAssignment(universeId, assetId){
-  assignments[assetId] = { main: null, h: false };
+  assignments[assetId] = { main: null, h: false, hSeq: 0 };
   render();
 }
 function clearAllAndRender(){ clearAll(); render(); }
