@@ -489,7 +489,6 @@
 
   <div class="eyebrow">MATUS CONSULTING <span>·</span> SINTONÍA 2026</div>
   <h1>Calculadora de reparto patrimonial</h1>
-  <p class="subtitle">Predios y estaciones · asigna cada activo completo a un grupo (o a Hortencia) y compara los tres escenarios de valuación de predios con la misma asignación.</p>
   <div class="header-rule"></div>
 
   <div id="app"></div>
@@ -506,13 +505,7 @@ const GROUPS = {
   H: { key:'H', label:'Hortencia', color:'var(--group-h)' }
 };
 
-// Escenarios de valuación de predios (la primera columna es la referencia para las diferencias)
-const SCENARIOS = [
-  { key:'add', title:'Avalúo addendum' },
-  { key:'sc',  title:'Sin castigo a 5 de Mayo' },
-  { key:'chu', title:'Avalúo Chuchín' }
-];
-const BASE_KEY = SCENARIOS[0].key;
+
 
 function valueOf(a, k){ return a.values ? a.values[k] : a.value; }
 
@@ -532,18 +525,17 @@ const UNIVERSES = [
     id:'predios',
     num:'Universo 1',
     title:'Predios',
-    scenarios:true,
     restrictionText:'Cada grupo debe quedarse con un edificio de Irapuato',
     restrictionNote:'Morelos 110 y 5 de Mayo',
     restrictionPair:['morelos','demayo'],
     assets:[
-      { id:'perules',  name:'Los Perules', values:{ add:115.50231,   sc:115.50231,   chu:105.105 },     own:own(40, 20, 20, 20, 0) },
-      { id:'antenas1', name:'Antenas 1',   values:{ add:76.4771175,  sc:76.4771175,  chu:67.414 },      own:own(50, SIXTH, SIXTH, SIXTH, 0) },
-      { id:'antenas2', name:'Antenas 2',   values:{ add:9.98566542,  sc:9.98566542,  chu:8.80228846 },  own:own(40, 20, 20, 20, 0) },
-      { id:'morelos',  name:'Morelos 110', values:{ add:13.4824725,  sc:13.4824725,  chu:14.123 },      own:own(40, 20, 20, 20, 0), restriction:true, badge:'Irapuato' },
-      { id:'demayo',   name:'5 de Mayo',   values:{ add:11.01629025, sc:11.596095,    chu:11.483 },      own:own(40, 20, 20, 20, 0), restriction:true, badge:'Irapuato' },
-      { id:'sonaja',   name:'La Sonaja',   values:{ add:7.10728779,  sc:7.10728779,   chu:7.10728779 },  own:own(THIRD, SIXTH, SIXTH, SIXTH, SIXTH) },
-      { id:'pino10',   name:'Pino 10',     values:{ add:2.92824,     sc:2.92824,      chu:2.92824 },     own:own(40, 20, 20, 20, 0) }
+      { id:'perules',  name:'Los Perules', value:115.50231,     own:own(40, 20, 20, 20, 0) },
+      { id:'antenas1', name:'Antenas 1',   value:76.4771175,      own:own(50, SIXTH, SIXTH, SIXTH, 0) },
+      { id:'antenas2', name:'Antenas 2',   value:9.98566542,  own:own(40, 20, 20, 20, 0) },
+      { id:'morelos',  name:'Morelos 110', value:13.4824725,      own:own(40, 20, 20, 20, 0), restriction:true, badge:'Irapuato' },
+      { id:'demayo',   name:'5 de Mayo',   value:11.01629025,      own:own(40, 20, 20, 20, 0), restriction:true, badge:'Irapuato' },
+      { id:'sonaja',   name:'La Sonaja',   value:7.10728779,  own:own(THIRD, SIXTH, SIXTH, SIXTH, SIXTH) },
+      { id:'pino10',   name:'Pino 10',     value:2.92824,     own:own(40, 20, 20, 20, 0) }
     ],
     defaults:{ perules:'A', sonaja:'A', pino10:'A', morelos:'A', antenas1:'B', antenas2:'B', demayo:'B' }
   },
@@ -684,7 +676,7 @@ function computePeople(u, k){
 
 function peopleTableHTML(u, scs){
   const cols = scs.map(sc => computePeople(u, sc.key));
-  const head = `<div class="cmp-head"><div>Participación por grupo y familiar<small>% sobre el valor total del universo</small></div>${scs.map(sc => `<div>${sc.title}</div>`).join('')}</div>`;
+  const head = `<div class="cmp-head"><div>Participación por grupo y familiar</div>${scs.map(sc => `<div>${sc.title}</div>`).join('')}</div>`;
 
   const cellHTML = (actual, target, total) => {
     const raw = actual - target;
@@ -721,17 +713,8 @@ function peopleTableHTML(u, scs){
 }
 
 // ---------- matriz: participación en valor (valor del activo × % de cada persona) ----------
-let matrixScenario = SCENARIOS[0].key;
-function setMatrixScenario(k){ matrixScenario = k; render(); }
-
 function pesos(n){
   return '$' + (n * 1e6).toLocaleString('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 });
-}
-
-function tabsHTML(){
-  return `<div class="tabs" role="tablist">${SCENARIOS.map(sc =>
-    `<button class="tab ${sc.key === matrixScenario ? 'active' : ''}" onclick="setMatrixScenario('${sc.key}')">${sc.title}</button>`
-  ).join('')}</div>`;
 }
 
 function valueMatrixHTML(u, k, tabs){
@@ -768,7 +751,7 @@ function valueMatrixHTML(u, k, tabs){
   return `
   <div class="vm-wrap-outer">
     <div class="vm-bar">
-      <div class="vm-title">Participación en valor por activo<small>Valor del activo × % de cada persona · en el total, % sobre el universo · el cursor muestra pesos</small></div>
+      <div class="vm-title">Participación en valor por activo</div>
       ${tabs || ''}
     </div>
     <div class="vm-scroll"><div class="vm">${head}${rows}<div class="vm-row vm-total"><div class="vm-label">Total</div>${totals}</div></div></div>
@@ -799,7 +782,7 @@ function assetNameHTML(u, a){
   const asg = assignments[a.id];
   let badge = '';
   if(asg.h){
-    const h = allocate(u, BASE_KEY)[a.id].h;
+    const h = allocate(u)[a.id].h;
     badge = `<span class="badge joint-badge" title="Hortencia solo cubre su derecho en dinero; el resto es del grupo asignado">Hortencia: ${money(h)}</span>`;
   }
   return `
@@ -820,24 +803,6 @@ function assetRowHTML(u, a){
   </div>`;
 }
 
-// Fila de predios (un valor por escenario + diferencia contra el addendum)
-function assetRowMultiHTML(u, a){
-  const { rowClass, isJoint } = rowClassFor(a);
-  const base = valueOf(a, BASE_KEY);
-  const cells = SCENARIOS.map(s => {
-    const v = valueOf(a, s.key);
-    const d = v - base;
-    const delta = (s.key !== BASE_KEY && Math.abs(d) >= 0.005) ? `<span class="delta">${deltaText(d)}</span>` : '';
-    return `<div class="asset-value" data-label="${s.title}">${money(v)}${delta}</div>`;
-  }).join('');
-  return `
-  <div class="asset-row ${rowClass}" data-asset="${a.id}">
-    ${assetNameHTML(u, a)}
-    ${cells}
-    ${segmentedHTML(u, a)}
-  </div>`;
-}
-
 function bannerHTML(u, c){
   let bannerClass, bannerIcon, bannerText;
   if(c.restrictionState === 'ok'){
@@ -853,68 +818,7 @@ function bannerHTML(u, c){
   return `<div class="restriction-banner ${bannerClass}"><span class="icon">${bannerIcon}</span><span>${bannerText}</span></div>`;
 }
 
-// Comparativo lado a lado de los 3 escenarios (predios)
-function comparisonHTML(u){
-  const cs = SCENARIOS.map(s => computeUniverse(u, s.key));
-  const baseTotal = cs[0].total;
-  const row = (label, cells, extra) => `
-    <div class="cmp-row ${extra||''}"><div class="cmp-label">${label}</div>${cells.map(x => `<div class="cmp-cell">${x}</div>`).join('')}</div>`;
-
-  const totalCells = cs.map((c,i) => {
-    const d = c.total - baseTotal;
-    const delta = (i > 0 && Math.abs(d) >= 0.005) ? `<span class="delta">${deltaText(d)} vs. addendum</span>` : '';
-    const sin = c.unassigned > 0.005 ? `<span class="delta">${money(c.unassigned)} sin asignar</span>` : '';
-    return `${money(c.total)}${delta}${sin}`;
-  });
-
-  const group = (cls, name, aKey, tKey, dKey) => `
-    <div class="cmp-group ${cls}">
-      <div class="group-name">${name}</div>
-      ${row('Asignado', cs.map(c => money(c[aKey])))}
-      ${row('Objetivo', cs.map(c => money(c[tKey])))}
-      ${row('Desviación', cs.map(c => `<span class="dev-num">${devText(c[dKey])}</span>`), 'dev')}
-    </div>`;
-
-  return `
-  <div class="cmp n3">
-    <div class="cmp-head"><div>Comparativo de escenarios</div>${SCENARIOS.map(s => `<div>${s.title}</div>`).join('')}</div>
-    ${row('Valor total del universo', totalCells, 'total')}
-    ${group('a', 'Grupo Marco + Adela', 'actualA', 'targetA', 'devA')}
-    ${group('b', 'Grupo Amparo + Alicia', 'actualB', 'targetB', 'devB')}
-    ${group('h', 'Hortencia', 'actualH', 'targetH', 'devH')}
-  </div>`;
-}
-
-function prediosHTML(u){
-  const c0 = computeUniverse(u, BASE_KEY);
-  return `
-  <div class="universe">
-    <div class="universe-head">
-      <div class="universe-title"><span class="num">${u.num}</span>${u.title}</div>
-    </div>
-
-    ${comparisonHTML(u)}
-
-    ${bannerHTML(u, c0)}
-
-    <div class="ledger multi">
-      <div class="ledger-header">
-        <div>Activo</div>
-        ${SCENARIOS.map((s,i) => `<div class="c2">${s.title}${i > 0 ? '<small>Δ vs. addendum</small>' : ''}</div>`).join('')}
-        <div class="c3">Asignación</div>
-      </div>
-      ${u.assets.map(a => assetRowMultiHTML(u,a)).join('')}
-    </div>
-
-    ${valueMatrixHTML(u, matrixScenario, tabsHTML())}
-
-    ${peopleTableHTML(u, SCENARIOS)}
-  </div>`;
-}
-
 function universeHTML(u){
-  if(u.scenarios) return prediosHTML(u);
-
   const c = computeUniverse(u);
 
   return `
@@ -979,8 +883,8 @@ function render(){
 
   document.getElementById('notes').innerHTML = `
     <p><strong>Restricciones vigentes:</strong> ningún activo queda compartido entre Marco+Adela y Amparo+Alicia; en Irapuato cada uno se queda con un edificio (Morelos 110 y 5 de Mayo); en Salamanca cada uno se queda con una A.M. (XEMAS-AM y XEEMM-AM). Hortencia no participa en estas restricciones. Un activo puede asignarse a un grupo (A o B) y además a Hortencia: ella solo cubre, en dinero, hasta su derecho dentro de cada universo (si se le marcan varios activos, se aplica en el orden en que se marcaron) y el resto del activo es del grupo asignado.</p>
-    <p>La asignación de predios es la misma en los tres escenarios; lo que cambia es el valor de avalúo y, con él, los objetivos y las desviaciones. Los objetivos se calculan a partir del % de participación por socio en cada predio/estación; pueden diferir en centésimas por el redondeo ya presente en esos porcentajes.</p>
-    <p>En "Participación en valor por activo", cada cifra es el valor del activo por el % de cada persona (la fila Total es lo que le corresponde a cada quien en el universo). En "Participación por grupo y familiar", <em>Derecho</em> es ese total y <em>Recibe</em> es lo que le toca con la asignación actual: el valor de cada activo asignado a un grupo se divide entre sus integrantes en proporción a su % en ese activo (si incluye a Hortencia, ella recibe solo hasta su derecho y el resto es del grupo).</p>
+    <p>Los objetivos se calculan a partir del % de participación por socio en cada predio/estación; pueden diferir en centésimas por el redondeo ya presente en esos porcentajes.</p>
+    <p>En "Participación en valor por activo", cada cifra es el valor del activo por el % de cada persona; el cursor muestra pesos (la fila Total es lo que le corresponde a cada quien en el universo). En "Participación por grupo y familiar", <em>Derecho</em> es ese total y <em>Recibe</em> es lo que le toca con la asignación actual: el valor de cada activo asignado a un grupo se divide entre sus integrantes en proporción a su % en ese activo (si incluye a Hortencia, ella recibe solo hasta su derecho y el resto es del grupo).</p>
   `;
 }
 
