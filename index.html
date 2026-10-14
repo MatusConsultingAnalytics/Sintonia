@@ -547,13 +547,13 @@ const UNIVERSES = [
     restrictionNote:'XEMAS-AM y XEEMM-AM',
     restrictionPair:['xemas','xeemm'],
     assets:[
-      { id:'xhnh', name:'XHNH-FM', value:14.19, own:own(50, SIXTH, SIXTH, SIXTH, 0) },
-      { id:'xhwe', name:'XHWE-FM', value:10.18, own:own(33.40, 22, 22, 22, 0.60) },
-      { id:'xhcn', name:'XHCN-FM', value:9.41, own:own(39.94, 20.02, 20.02, 20.02, 0) },
-      { id:'xhya', name:'XHYA-FM', value:8.52, own:own(26.70, 23.90, 23.90, 23.90, 1.60) },
-      { id:'xhamo', name:'XHAMO-FM', value:6.45, own:own(40, 20, 20, 20, 0) },
-      { id:'xemas', name:'XEMAS-AM', value:4.26, own:own(41.50, 20.17, 14.17, 14.16, 10), restriction:true, badge:'Salamanca' },
-      { id:'xeemm', name:'XEEMM-AM', value:4.30, own:own(25, 25, 25, 25, 0), restriction:true, badge:'Salamanca' }
+      { id:'xhnh', name:'XHNH-FM', value:14.19223588, own:own(50, SIXTH, SIXTH, SIXTH, 0) },
+      { id:'xhwe', name:'XHWE-FM', value:10.17627072, own:own(33.40, 22, 22, 22, 0.60) },
+      { id:'xhcn', name:'XHCN-FM', value:9.40632425, own:own(39.94, 20.02, 20.02, 20.02, 0) },
+      { id:'xhya', name:'XHYA-FM', value:8.52085965, own:own(26.70, 23.90, 23.90, 23.90, 1.60) },
+      { id:'xhamo', name:'XHAMO-FM', value:6.45194337, own:own(40, 20, 20, 20, 0) },
+      { id:'xemas', name:'XEMAS-AM', value:4.25585676, own:own(41.50, 20.17, 14.165, 14.165, 10), restriction:true, badge:'Salamanca' },
+      { id:'xeemm', name:'XEEMM-AM', value:4.29839964, own:own(25, 25, 25, 25, 0), restriction:true, badge:'Salamanca' }
     ],
     defaults:{ xhnh:'A', xhya:'A', xhamo:'A', xemas:'A', xhwe:'B', xhcn:'B', xeemm:'B' }
   }
@@ -777,7 +777,11 @@ function rowClassFor(a){
   return { rowClass, isJoint };
 }
 
-function fmtOwn(n){ return (Math.round(n*100)/100).toString() + '%'; }
+function fmtOwn(n){
+  const r2 = Math.round(n*100)/100, r3 = Math.round(n*1000)/1000;
+  // 3 decimales solo cuando el % lo requiere (p. ej. 14.165%)
+  return (Math.abs(n - r3) < 1e-9 && Math.abs(n - r2) > 1e-9 ? r3 : r2).toString() + '%';
+}
 function assetNameHTML(u, a){
   const asg = assignments[a.id];
   let badge = '';
