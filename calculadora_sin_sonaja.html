@@ -528,6 +528,7 @@ const UNIVERSES = [
     restrictionText:'Cada grupo debe quedarse con un edificio de Irapuato',
     restrictionNote:'Morelos 110 y 5 de Mayo',
     restrictionPair:['morelos','demayo'],
+    noH:true,
     assets:[
       { id:'perules',  name:'Los Perules', value:115.50231,     own:own(40, 20, 20, 20, 0) },
       { id:'antenas1', name:'Antenas 1',   value:76.4771175,      own:own(50, SIXTH, SIXTH, SIXTH, 0) },
@@ -694,7 +695,7 @@ function peopleTableHTML(u, scs){
     { cls:'b', label:'Grupo Amparo + Alicia', keys:['Al','Am'] },
     { cls:'h', label:'Hortencia',             keys:['H'] }
   ];
-  const rows = BLOCKS.map(b => {
+  const rows = BLOCKS.filter(b => !(u.noH && b.cls === 'h')).map(b => {
     const sumVals = c => ({
       actual: b.keys.reduce((sum,k) => sum + c.people[k].actual, 0),
       target: b.keys.reduce((sum,k) => sum + c.people[k].target, 0)
@@ -727,17 +728,19 @@ function valueMatrixHTML(u, k, tabs){
     { cls:'h', label:'Hortencia',       keys:['H'] },
     { cls:'t', label:'Total',           keys:['M','Ad','Al','Am','H'], group:true }
   ];
+  if(u.noH){ const i = COLS.findIndex(c => c.cls === 'h'); COLS.splice(i,1); COLS[COLS.length-1].keys = ['M','Ad','Al','Am']; }
+  const rowStyle = ` style="grid-template-columns:minmax(120px,1.2fr) repeat(${COLS.length},minmax(94px,1fr))"`;
   const universeTotal = u.assets.reduce((sum,a) => sum + valueOf(a, k), 0);
   const sumPct = (a, keys) => keys.reduce((sum,key) => sum + a.own[key], 0);
   const cell = (c, v, txt) =>
     `<div class="vm-cell ${c.cls}${c.group ? ' grp' : ''}" title="${pesos(v)}"><b>${money(v)}</b><span>${txt}</span></div>`;
 
-  const head = `<div class="vm-row vm-hd"><div class="vm-label">Activo</div>${COLS.map(c => `<div class="vm-cell ${c.cls}${c.group ? ' grp' : ''}">${c.label}</div>`).join('')}</div>`;
+  const head = `<div class="vm-row vm-hd"${rowStyle}><div class="vm-label">Activo</div>${COLS.map(c => `<div class="vm-cell ${c.cls}${c.group ? ' grp' : ''}">${c.label}</div>`).join('')}</div>`;
   const rows = u.assets.map(a => {
     const v = valueOf(a, k);
     const asg = assignments[a.id];
     const rc = asg.main === 'A' ? 'row-a' : (asg.main === 'B' ? 'row-b' : (asg.h ? 'row-h' : ''));
-    return `<div class="vm-row ${rc}"><div class="vm-label">${a.name}</div>${COLS.map(c => {
+    return `<div class="vm-row ${rc}"${rowStyle}><div class="vm-label">${a.name}</div>${COLS.map(c => {
       const pc = sumPct(a, c.keys);
       return cell(c, v * pc / 100, fmtOwn(pc));
     }).join('')}</div>`;
@@ -753,7 +756,7 @@ function valueMatrixHTML(u, k, tabs){
       <div class="vm-title">Participación en valor por activo</div>
       ${tabs || ''}
     </div>
-    <div class="vm-scroll"><div class="vm">${head}${rows}<div class="vm-row vm-total"><div class="vm-label">Total</div>${totals}</div></div></div>
+    <div class="vm-scroll"><div class="vm">${head}${rows}<div class="vm-row vm-total"${rowStyle}><div class="vm-label">Total</div>${totals}</div></div></div>
   </div>`;
 }
 
@@ -763,7 +766,7 @@ function segmentedHTML(u, a){
     <div class="segmented" role="group" aria-label="Asignación de ${a.name}">
       <button class="seg-btn ${asg.main==='A' ? 'active-a':''}" title="Marco + Adela" onclick="setMainGroup('${u.id}','${a.id}','A')">A</button>
       <button class="seg-btn ${asg.main==='B' ? 'active-b':''}" title="Amparo + Alicia" onclick="setMainGroup('${u.id}','${a.id}','B')">B</button>
-      <button class="seg-btn ${asg.h ? 'active-h':''}" title="Hortencia (se puede combinar con A o B)" onclick="toggleHortencia('${u.id}','${a.id}')">H</button>
+      ${u.noH ? '' : `<button class="seg-btn ${asg.h ? 'active-h':''}" title="Hortencia (se puede combinar con A o B)" onclick="toggleHortencia('${u.id}','${a.id}')">H</button>`}
       <button class="seg-btn seg-none ${(!asg.main && !asg.h) ? 'active-none':''}" title="Sin asignar" onclick="clearAssignment('${u.id}','${a.id}')">–</button>
     </div>`;
 }
@@ -831,7 +834,7 @@ function universeHTML(u){
       <div class="universe-total">Valor total del universo: <b>${money(c.total)}</b>${c.unassigned > 0.005 ? ` · ${money(c.unassigned)} sin asignar` : ''}</div>
     </div>
 
-    <div class="summary">
+    <div class="summary"${u.noH ? ' style="grid-template-columns:1fr 1fr"' : ''}>
       <div class="group-panel a">
         <div class="group-name">Grupo Marco + Adela</div>
         <div class="group-row"><span>Asignado</span><b>${money(c.actualA)}</b></div>
@@ -850,7 +853,7 @@ function universeHTML(u){
           <span class="dev-num">${devText(c.devB)}</span>
         </div>
       </div>
-      <div class="group-panel h">
+      ${u.noH ? '' : `<div class="group-panel h">
         <div class="group-name">Hortencia</div>
         <div class="group-row"><span>Asignado</span><b>${money(c.actualH)}</b></div>
         <div class="group-row"><span>Objetivo (por % de participación)</span><b>${money(c.targetH)}</b></div>
@@ -858,7 +861,7 @@ function universeHTML(u){
           <span>Desviación</span>
           <span class="dev-num">${devText(c.devH)}</span>
         </div>
-      </div>
+      </div>`}
     </div>
 
     ${bannerHTML(u, c)}
