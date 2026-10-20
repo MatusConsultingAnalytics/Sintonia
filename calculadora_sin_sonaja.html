@@ -212,6 +212,8 @@
   .cmp-row.person.member{background:#fff;border-top:1px dashed var(--border);}
   .cmp-row.person.member .cmp-label{padding-left:14px;font-weight:600;font-size:13px;}
   .cmp-row.person.member .cmp-cell{font-weight:500;}
+  .cmp-row.person.settle{background:#fff;border-top:1px dashed var(--border);}
+  .cmp-row.person.settle .cmp-label{padding-left:14px;font-weight:600;font-size:13px;}
   .cmp-row.person.member .cmp-cell > div:first-child{font-weight:600;}
   .p-sub{font-size:11.5px;font-weight:500;color:var(--gray-dark);margin-top:1px;}
   .p-dev{margin-top:1px;}
@@ -707,7 +709,24 @@ function peopleTableHTML(u, scs){
       const person = PEOPLE.find(x => x.key === k);
       return rowHTML(b.cls + ' member', person.name, c => c.people[k]);
     }).join('');
-    return rowHTML(b.cls + ' group', b.label, sumVals) + members;
+    const settle = c => {
+      const [k1,k2] = b.keys;
+      const d1 = c.people[k1].actual - c.people[k1].target;
+      const d2 = c.people[k2].actual - c.people[k2].target;
+      if(!(d1 > 0.005 && d2 < -0.005) && !(d2 > 0.005 && d1 < -0.005)) return null;
+      const from = d1 > 0 ? k1 : k2, to = d1 > 0 ? k2 : k1;
+      const amt = Math.min(Math.abs(d1), Math.abs(d2));
+      const nm = k => PEOPLE.find(x => x.key === k).name;
+      return { from:nm(from), to:nm(to), amt, afterTo:c.people[to].actual + amt, afterFrom:c.people[from].actual - amt, toName:nm(to), fromName:nm(from) };
+    };
+    const sets = cols.map(settle);
+    let settleRow = '';
+    if(sets.some(x => x)){
+      settleRow = `<div class="cmp-row person settle ${b.cls}"><div class="cmp-label">Compensación entre integrantes</div>${sets.map(x => x
+        ? `<div class="cmp-cell"><div>${x.from} → ${x.to}: ${money(x.amt)}</div><div class="p-sub">Quedan: ${x.toName} ${money(x.afterTo)} · ${x.fromName} ${money(x.afterFrom)}</div></div>`
+        : `<div class="cmp-cell"><div class="p-sub">Sin compensación</div></div>`).join('')}</div>`;
+    }
+    return rowHTML(b.cls + ' group', b.label, sumVals) + members + settleRow;
   }).join('');
   return `<div class="cmp n${scs.length} people">${head}${rows}</div>`;
 }
