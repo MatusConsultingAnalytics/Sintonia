@@ -536,9 +536,6 @@ const UNIVERSES = [
     id:'predios',
     num:'Universo 1',
     title:'Predios',
-    restrictionText:'Morelos 110 y 5 de Mayo no deben quedar en el mismo grupo',
-    restrictionNote:'Morelos 110 y 5 de Mayo',
-    restrictionPair:['morelos','demayo'],
     noH:true,
     assets:[
       { id:'perules',  name:'Los Perules', value:115.50231,     own:own(40, 20, 20, 20, 0) },
@@ -554,9 +551,6 @@ const UNIVERSES = [
     id:'estaciones',
     num:'Universo 2',
     title:'Estaciones',
-    restrictionText:'XEMAS-AM y XEEMM-AM no deben quedar en el mismo grupo',
-    restrictionNote:'XEMAS-AM y XEEMM-AM',
-    restrictionPair:['xemas','xeemm'],
     assets:[
       { id:'xhnh', name:'XHNH-FM', value:14.19223588, own:own(50, SIXTH, SIXTH, SIXTH, 0) },
       { id:'xhwe', name:'XHWE-FM', value:10.17627072, own:own(33.40, 22, 22, 22, 0.60) },
@@ -656,14 +650,7 @@ function computeUniverse(u, k){
   const devCPct = total ? (devC/total*100) : 0;
   const devHPct = targetH > 0.0001 ? (devH/targetH*100) : (actualH > 0.0001 ? 100 : 0);
 
-  const [id1, id2] = u.restrictionPair;
-  const g1 = assignments[id1].main, g2 = assignments[id2].main;
-  let restrictionState;
-  if(g1 && g2 && g1 !== g2) restrictionState = 'ok';
-  else if(g1 && g2) restrictionState = 'bad';
-  else restrictionState = 'pending';
-
-  return { total, targetA, targetB, targetC, targetH, actualA, actualB, actualC, actualH, unassigned, devA, devB, devC, devH, devAPct, devBPct, devCPct, devHPct, restrictionState };
+  return { total, targetA, targetB, targetC, targetH, actualA, actualB, actualC, actualH, unassigned, devA, devB, devC, devH, devAPct, devBPct, devCPct, devHPct };
 }
 
 // Valor que recibe y valor que le corresponde (derecho) a cada familiar.
@@ -844,21 +831,6 @@ function assetRowHTML(u, a){
   </div>`;
 }
 
-function bannerHTML(u, c){
-  let bannerClass, bannerIcon, bannerText;
-  if(c.restrictionState === 'ok'){
-    bannerClass='ok'; bannerIcon='✓';
-    bannerText=`${u.restrictionText} — cumplida.`;
-  } else if(c.restrictionState === 'bad'){
-    bannerClass='bad'; bannerIcon='⚠';
-    bannerText=`${u.restrictionText} — no se cumple: ambos quedaron en el mismo grupo.`;
-  } else {
-    bannerClass='pending'; bannerIcon='•';
-    bannerText=`${u.restrictionText} — falta asignarlos.`;
-  }
-  return `<div class="restriction-banner ${bannerClass}"><span class="icon">${bannerIcon}</span><span>${bannerText}</span></div>`;
-}
-
 function universeHTML(u){
   const c = computeUniverse(u);
 
@@ -907,8 +879,6 @@ function universeHTML(u){
         </div>
       </div>`}
     </div>
-
-    ${bannerHTML(u, c)}
 
     <div class="ledger">
       <div class="ledger-header">
